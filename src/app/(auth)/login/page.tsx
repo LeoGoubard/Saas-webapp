@@ -13,8 +13,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Logo from '../../../../public/cypresslogo.svg'
 import { Button } from '@/components/ui/button';
-import Loader from '@/components/Loader';
 import { actionLoginUser } from '@/lib/server-action/auth-actions';
+import Loader from '@/components/ui/loader';
+
 
 const LoginPage = () => {
   const router = useRouter();
@@ -76,7 +77,7 @@ const LoginPage = () => {
         <Button type="submit" className="w-full p-6" size="lg" disabled={isLoading}>{!isLoading ? "Login" : <Loader /> }</Button>
         <span className="self-center">
           Dont have an account ?
-          <Link href="/ignup" className="text-primary"> Sign Up</Link>
+          <Link href="/signup" className="text-primary"> Sign Up</Link>
         </span>
       </form>
     </Form>
