@@ -14,7 +14,7 @@ import Image from 'next/image';
 import Logo from '../../../../public/cypresslogo.svg'
 import { Button } from '@/components/ui/button';
 import { actionLoginUser } from '@/lib/server-action/auth-actions';
-import Loader from '@/components/ui/loader';
+import Loader from '@/components/global/Loader';
 
 
 const LoginPage = () => {

@@ -24,7 +24,7 @@ import { MailCheck } from 'lucide-react';
 import { FormSchema } from '@/lib/types';
 import { actionSignUpUser } from '@/lib/server-action/auth-actions';
 
-import Loader from '@/components/ui/loader';
+import Loader from '@/components/global/Loader';
 
 const SignUpFormSchema = z
   .object({
