@@ -1,7 +1,25 @@
+'use server';
+import { validate } from 'uuid';
+import { files, folders, users, workspaces } from '../../../migrations/schema';
 import db from './db';
+import { File, Folder, Subscription, User, workspace } from './supabase.types';
 import { and, eq, ilike, notExists } from 'drizzle-orm';
-import { Subscription } from './supabase.types';
 
+
+export const createWorkspace = async (workspace: workspace) => {
+  try {
+    const response = await db.insert(workspaces).values(workspace);
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error' };
+  }
+};
+
+export const deleteWorkspace = async (workspaceId: string) => {
+  if (!workspaceId) return;
+  await db.delete(workspaces).where(eq(workspaces.id, workspaceId));
+};
 
 export const getUserSubscriptionStatus = async (userId: string) => {
   try {
@@ -15,3 +33,4 @@ export const getUserSubscriptionStatus = async (userId: string) => {
     return { data: null, error: `Error` };
   }
 };
+

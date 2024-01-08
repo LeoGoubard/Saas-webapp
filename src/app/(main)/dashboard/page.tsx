@@ -6,6 +6,7 @@ import db from '@/lib/supabase/db';
 import { redirect } from 'next/navigation';
 import DashboardSetup from '@/components/dashboard-setup/dashboard-setup';
 import { getUserSubscriptionStatus } from '@/lib/supabase/queries';
+import AppStateProvider from '@/lib/providers/state-provider';
 /* import DashboardSetup from '@/components/dashboard-setup/dashboard-setup';
 import { getUserSubscriptionStatus } from '@/lib/supabase/queries'; */
 
@@ -35,10 +36,12 @@ const DashboardPage = async () => {
         items-center
   "
       >
-        <DashboardSetup
-          user={user}
-          subscription={subscription}
-        />
+        <AppStateProvider>
+          <DashboardSetup
+            user={user}
+            subscription={subscription}
+          />
+        </AppStateProvider>
       </div>
     );
 
