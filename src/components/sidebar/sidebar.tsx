@@ -18,7 +18,6 @@ const Sidebar = async ({ params, className } : SidebarProps ) => {
   } = await supabase.auth.getUser();
 
   if (!user) return;
-
   //subscr
   const { data: subscriptionData, error: subscriptionError } =
     await getUserSubscriptionStatus(user.id);
@@ -27,8 +26,10 @@ const Sidebar = async ({ params, className } : SidebarProps ) => {
   const { data: workspaceFolderData, error: foldersError } = await getFolders(
     params.workspaceId
   );
-  //error
-  if (subscriptionError || foldersError) redirect('/dashboard');
+
+
+  /* //error
+  if (subscriptionError || foldersError) redirect('/dashboard'); */
 
   // Return your component content here
   return <div>Sidebar</div>;

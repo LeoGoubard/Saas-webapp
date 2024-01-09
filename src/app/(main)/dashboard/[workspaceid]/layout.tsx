@@ -10,7 +10,6 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, params }) => {
   return (
     <main className="flex overflow-hidden h-screen w-screen">
-      {/* @ts-expect-error Async Server Component */}
       <Sidebar params={params} />
       <div className="dark:boder-Neutrals-12/70 border-l-[1px] w-full relative overflow-scroll">
         {children}
