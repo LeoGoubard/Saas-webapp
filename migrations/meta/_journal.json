@@ -22,6 +22,13 @@
       "when": 1704206006521,
       "tag": "0002_gorgeous_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1704809003745,
+      "tag": "0003_gray_grim_reaper",
+      "breakpoints": true
     }
   ]
 }
