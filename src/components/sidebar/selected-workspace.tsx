@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react'
 
 interface SelectedWorkSpaceProps {
   workspace: workspace;
-  onClick?: () => void;
+  onClick?: (option: workspace) => void;
 }
 
 const SelectedWorkspace: React.FC<SelectedWorkSpaceProps> = ({ onClick, workspace }) => {
@@ -18,16 +18,15 @@ const SelectedWorkspace: React.FC<SelectedWorkSpaceProps> = ({ onClick, workspac
   useEffect(() => {
     if (workspace.logo) {
       const path = supabase.storage.from('workspace-logos').getPublicUrl(workspace.logo)?.data.publicUrl;
-      console.log('PATH', path)
       setWorkspaceLogo(path)
     }
   }, [workspace, supabase])
-  
+
   return (
     <Link
       href={`/dashboard/${workspace.id}`}
       onClick={() => {
-        if(onClick) onClick();
+        if(onClick) onClick(workspace);
       }}
       className="flex rounded-md hover:bg-muted transition-all flex-row p-2 gap-4 justify-center cursor-pointer items-center my-2"
     >
