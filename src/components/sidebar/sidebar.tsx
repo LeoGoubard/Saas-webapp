@@ -5,6 +5,10 @@ import { getCollaboratingWorkspaces, getFolders, getPrivateWorkspaces, getShared
 import { redirect } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 import WorkspaceDropdown from './workspace-dropdown';
+import PlanUsage from './plan-usage';
+import NativeNavigation from './native-navigation';
+import { ScrollArea } from '../ui/scroll-area';
+import FoldersDropdownList from './folders-dropdown-list';
 
 interface SidebarProps {
   params: { workspaceid: string };
@@ -51,9 +55,11 @@ const Sidebar = async ({ params, className } : SidebarProps ) => {
             ...sharedWorkspaces,
             ...collaboratingWorkspaces
           ].find(workspace => workspace.id === params.workspaceid)}
-        >
-
-        </WorkspaceDropdown>
+        />
+        <PlanUsage foldersLength={workspaceFolderData?.length || 0} subscription={subscriptionData} />
+        <NativeNavigation myWorkspaceId={params.workspaceid} />
+        <ScrollArea className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-background to-transparent z-40" />
+        <FoldersDropdownList workspaceFolders={workspaceFolderData} workspaceId={params.workspaceid} />
       </div>
     </aside>
   );
