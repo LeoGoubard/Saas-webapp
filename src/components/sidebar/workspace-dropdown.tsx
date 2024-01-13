@@ -40,6 +40,13 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = ({
   
   }, [privateWorkspaces, sharedWorkspaces, collaboratingWorkspaces, dispatch, state])
   
+  useEffect(() => {
+    const findSelectedWorksapce = state.workspaces.find((workspace: any) => workspace.id === defaultValue?.id);
+
+    if (findSelectedWorksapce) setSelectedOption(findSelectedWorksapce);
+  }, [state, defaultValue])
+  
+
   const handleSelect = (option: workspace) => {
     setSelectedOption(option);
     setIsOpen(false)

@@ -9,6 +9,7 @@ import PlanUsage from './plan-usage';
 import NativeNavigation from './native-navigation';
 import { ScrollArea } from '../ui/scroll-area';
 import FoldersDropdownList from './folders-dropdown-list';
+import UserCard from './user-card';
 
 interface SidebarProps {
   params: { workspaceid: string };
@@ -61,6 +62,7 @@ const Sidebar = async ({ params, className } : SidebarProps ) => {
         <ScrollArea className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-background to-transparent z-40" />
         <FoldersDropdownList workspaceFolders={workspaceFolderData || []} workspaceId={params.workspaceid} />
       </div>
+      <UserCard subscription={subscriptionData} />
     </aside>
   );
 };

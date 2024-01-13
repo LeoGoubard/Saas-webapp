@@ -8,7 +8,6 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, params }) => {
-  console.log('params', params)
   return (
     <main className="flex overflow-hidden h-screen w-screen">
       <Sidebar params={params} />

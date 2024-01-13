@@ -32,7 +32,7 @@ const SelectedWorkspace: React.FC<SelectedWorkSpaceProps> = ({ onClick, workspac
     >
       <Image src={workspaceLogo} alt="workspace logo" width={26} height={26} />
       <div className="flex flex-col">
-        <p className="text-lg text-white w-[170px] overflow-hidden overflow-ellipsis whitespace-nowrap">
+        <p className="text-lg dark:text-white w-[170px] overflow-hidden overflow-ellipsis whitespace-nowrap">
           {workspace.title}
         </p>
       </div>

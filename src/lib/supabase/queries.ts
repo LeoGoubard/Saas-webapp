@@ -5,6 +5,7 @@ import db from './db';
 import { File, Folder, Subscription, User, workspace } from './supabase.types';
 import { and, eq, ilike, notExists } from 'drizzle-orm';
 import { collaborators } from './schema';
+import { revalidatePath } from 'next/cache';
 
 
 export const createWorkspace = async (workspace: workspace) => {
@@ -143,6 +144,27 @@ export const getSharedWorkspaces = async (userId: string) => {
   return sharedWorkspaces;
 };
 
+export const getWorkspaceDetails = async (workspaceId: string) => {
+  const isValid = validate(workspaceId);
+  if (!isValid)
+    return {
+      data: [],
+      error: 'Error',
+    };
+
+  try {
+    const response = (await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .limit(1)) as workspace[];
+    return { data: response, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error: 'Error' };
+  }
+};
+
 export const addCollaborators = async (users: User[], workspaceId: string) => {
   const response = users.forEach(async (user: User) => {
     const userExists = await db.query.collaborators.findFirst({ where: (u, {eq}) => and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId))});
@@ -165,6 +187,18 @@ export const createFolder = async (folder: Folder) => {
       data: null,
       error: "error"
     }
+  }
+}
+
+export const updateWorkspace = async(workspace: Partial<workspace>, workspaceId: string) => {
+  if (!workspaceId) return;
+  try {
+    await db.update(workspaces).set(workspace).where(eq(workspaces.id, workspaceId));
+    revalidatePath(`/dashboard/${workspaceId}`);
+    return { data: null, error: null }
+  } catch (error) {
+    console.log(error)
+    return { data: null, error: 'Error' }
   }
 }
 
@@ -212,4 +246,25 @@ export const createFile = async (file: File) => {
     console.log(error);
     return { data: null, error: 'Error' };
   }
+};
+
+export const removeCollaborators = async (
+  users: User[],
+  workspaceId: string
+) => {
+  const response = users.forEach(async (user: User) => {
+    const userExists = await db.query.collaborators.findFirst({
+      where: (u, { eq }) =>
+        and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
+    });
+    if (userExists)deleteWorkspace
+      await db
+        .delete(collaborators)
+        .where(
+          and(
+            eq(collaborators.workspaceId, workspaceId),
+            eq(collaborators.userId, user.id)
+          )
+        );
+  });
 };
