@@ -8,13 +8,16 @@ import { useSupabaseUser } from '@/lib/providers/supabase-user-provider';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Briefcase, Lock, Plus, Share } from 'lucide-react';
+import { Briefcase, CreditCard, Lock, LogOut, Plus, Share, User as UserIcon } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
 import {
   addCollaborators,
   deleteWorkspace,
+  findUser,
+  getCollaborators,
   removeCollaborators,
+  updateUser,
   updateWorkspace,
 } from '@/lib/supabase/queries';
 import { Input } from '../ui/input';
@@ -24,6 +27,10 @@ import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Alert, AlertDescription } from '../ui/alert';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { AlertDialogAction } from '@radix-ui/react-alert-dialog';
+import CypressProfileIcon from '../icons/cypressProfileIcon';
+import LogoutButton from '../global/logout-button';
 
 const SettingsForm = () => {
   const { toast } = useToast();
@@ -35,6 +42,7 @@ const SettingsForm = () => {
   const [permissions, setPermissions] = useState('privaet');
   const [collaborators, setCollaborators] = useState<User[] | []>([])
   const [openAlertMessage, setOpenAlertMessage] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [workspaceDetails, setWorkspaceDetails] = useState<workspace>()
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [uploadingProfilPic, setUploadingProfilPic] = useState(false);
@@ -102,12 +110,72 @@ const SettingsForm = () => {
     }
   }
 
+  const onChangeProfilPicture = async(e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!workspaceId)  return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uuid = v4();
+    setUploadingLogo(true);
+    const { data, error } = await supabase.storage
+    .from('user-avatars')
+    .upload(`userAvatar.${uuid}`, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+    if (!error && user && data) {
+      await updateUser({ avatarUrl: data.path }, user.id);
+      setUploadingLogo(false)
+    }
+  }
+
+  const onClickAlertConfirm = async() => {
+    if (!workspaceId) return;
+    if (collaborators.length > 0) {
+      await removeCollaborators(collaborators, workspaceId);
+    }
+
+    setPermissions('private')
+    setOpenAlertMessage(false)
+  }
+
+  const onPermissionChange = (val: string) => {
+    if(val === 'private') {
+      setOpenAlertMessage(true)
+    } else setPermissions(val)
+  }
+  //fetching avatar details
+  useEffect(() => {
+    const fetchAvatar = async() => {
+      if (!user) return;
+      const response = await findUser(user.id);
+      if (!response) return;
+      setAvatarUrl(response.avatarUrl ? supabase.storage.from('user-avatars').getPublicUrl(response.avatarUrl).data.publicUrl  : '')
+    }
+    fetchAvatar();
+  }, [user, supabase]);
 
   useEffect(() => {
     const showingWorkspace = state.workspaces.find(
       (workspace) => workspace.id === workspaceId
     );
     if (showingWorkspace) setWorkspaceDetails(showingWorkspace);
+  }, [workspaceId, state]);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    const fetchCollaborators = async() => {
+      const response = await getCollaborators(workspaceId)
+
+      if (response.length) {
+        setPermissions('shared')
+        setCollaborators(response)
+      }
+    }
+
+    fetchCollaborators()
+
   }, [workspaceId, state]);
 
   return (
@@ -145,10 +213,8 @@ const SettingsForm = () => {
       <>
         <Label htmlFor="permissions">Permissions</Label>
         <Select
-          onValueChange={(val) => {
-            setPermissions(val);
-          }}
-          defaultValue={permissions}
+          onValueChange={onPermissionChange}
+          value={permissions}
         >
           <SelectTrigger className="w-full h-26 -mt-3">
             <SelectValue />
@@ -241,7 +307,59 @@ const SettingsForm = () => {
             Delete Workspace
           </Button>
         </Alert>
+        <p className="flex items-center gap-2 mt-6">
+          <UserIcon size={26} />Profile
+        </p>
+        <Separator />
+        <div className="flex items-center">
+          <Avatar>
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback>
+              <CypressProfileIcon />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col ml-6">
+            <small className="text-muted-foreground cursor-not-allowed">{user ? user.email : ''}</small>
+            <Label htmlFor="profilePicture" className="text-sm text-muted-foreground">
+              Profile Picture
+            </Label>
+            <Input
+              name="profilePicture"
+              type="file"
+              accept="image/*"
+              placeholder='Profile Picture'
+              onChange={onChangeProfilPicture}
+              disabled={uploadingProfilPic}
+            />
+          </div>
+        </div>
+        <LogoutButton>
+          <div className="flex items-center">
+            <LogOut />
+          </div>
+        </LogoutButton>
+        <p className="flex items-center gap-2 mt-6">
+          <CreditCard size={20}/>Billing & Plan
+        </p>
+        <Separator />
+        <p className="text-muted-foreground">
+          {subscription?.status === 'active' ? 'Pro' : 'Free'}Plan
+        </p>
       </>
+      <AlertDialog open={openAlertMessage}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Changing a Shared workspace to a Private worksapce will remove all collaborators permanently.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpenAlertMessage(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onClickAlertConfirm}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

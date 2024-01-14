@@ -8,6 +8,7 @@ import { twMerge } from 'tailwind-merge'
 import AppStateProvider from '@/lib/providers/state-provider'
 import { SupabaseUserProvider } from '@/lib/providers/supabase-user-provider'
 import { Toaster } from '@/components/ui/toaster'
+import { SocketProvider } from '@/lib/providers/socket-provider'
 
 const inter = DM_Sans({ subsets: ['latin'] })
 
@@ -21,7 +22,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  console.log(db)
+  // console.log(db)
   return (
     <html suppressHydrationWarning={true} lang="en">
       <body suppressHydrationWarning={true} className={twMerge('bg-background', inter.className)}>
@@ -32,7 +33,9 @@ export default function RootLayout({
         >
           <AppStateProvider>
             <SupabaseUserProvider>
-              {children}
+              <SocketProvider>
+                {children}
+              </SocketProvider>
               <Toaster />
             </SupabaseUserProvider>  
           </AppStateProvider>

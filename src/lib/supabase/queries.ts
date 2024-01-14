@@ -5,7 +5,6 @@ import db from './db';
 import { File, Folder, Subscription, User, workspace } from './supabase.types';
 import { and, eq, ilike, notExists } from 'drizzle-orm';
 import { collaborators } from './schema';
-import { revalidatePath } from 'next/cache';
 
 
 export const createWorkspace = async (workspace: workspace) => {
@@ -35,6 +34,18 @@ export const getUserSubscriptionStatus = async (userId: string) => {
     return { data: null, error: `Error` };
   }
 };
+
+export const getCollaborators = async (workspaceId: string) => {
+  const response = await db.select().from(collaborators).where(eq(collaborators.workspaceId, workspaceId))
+
+  if (!response.length) return [];
+  const userInformations: Promise<User | undefined>[] = response.map( async(user) => {
+    const exists = await db.query.users.findFirst({ where: (u, {eq}) => eq(u.id, user.userId)});
+    return exists
+  });
+  const resolvedUsers = await Promise.all(userInformations);
+  return resolvedUsers.filter(Boolean) as User[];
+}
 
 export const getFolders = async (workSpaceId: string) => {
   const isValid = validate(workSpaceId);
@@ -236,7 +247,17 @@ export const updateWorkspace = async(workspace: Partial<workspace>, workspaceId:
   if (!workspaceId) return;
   try {
     await db.update(workspaces).set(workspace).where(eq(workspaces.id, workspaceId));
-    revalidatePath(`/dashboard/${workspaceId}`);
+    return { data: null, error: null }
+  } catch (error) {
+    console.log(error)
+    return { data: null, error: 'Error' }
+  }
+}
+
+export const updateUser = async(user: Partial<User>, userId: string) => {
+  if (!userId) return;
+  try {
+    await db.update(users).set(user).where(eq(users.id, userId));
     return { data: null, error: null }
   } catch (error) {
     console.log(error)
@@ -319,4 +340,11 @@ export const deleteFile = async (fileId: string) => {
 export const deleteFolder = async (folderId: string) => {
   if (!folderId) return;
   await db.delete(files).where(eq(files.id, folderId));
+};
+
+export const findUser = async (userId: string) => {
+  const response = await db.query.users.findFirst({
+    where: (u, { eq }) => eq(u.id, userId),
+  });
+  return response;
 };

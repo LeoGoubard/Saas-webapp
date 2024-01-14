@@ -7,7 +7,6 @@ import React from 'react'
 
 const Workspace = async ({ params }: { params: { workspaceid: string } }) => {
   const { data, error } = await getWorkspaceDetails(params.workspaceid);
-  console.log('ICIII', data, error)
   // if (error || !data.length) redirect('/dashboard');
 
   return (

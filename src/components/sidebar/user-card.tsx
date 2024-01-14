@@ -28,14 +28,14 @@ const UserCard: React.FC<UserCardProps> = async ({ subscription }) => {
   if (!response.avatarUrl) avatarPath = '';
   else {
     avatarPath = supabase.storage
-      .from('avatars')
+      .from('user-avatars')
       .getPublicUrl(response.avatarUrl)?.data.publicUrl;
   }
   const profile = {
     ...response,
     avatarUrl: avatarPath,
   };
-
+  console.log('profile', profile)
   return (
     <article
       className="hidden

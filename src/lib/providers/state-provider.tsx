@@ -8,11 +8,12 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
-import { File, Folder, workspace } from '../supabase/supabase.types';
+import { File, Folder, User, workspace } from '../supabase/supabase.types';
 import { usePathname } from 'next/navigation';
 import { getFiles } from '../supabase/queries';
 
 export type appFoldersType = Folder & { files: File[] | [] };
+export type appUserType = User;
 export type appWorkspacesType = workspace & {
   folders: appFoldersType[] | [];
 };
@@ -62,6 +63,13 @@ type Action =
         folder: Partial<appFoldersType>;
         workspaceId: string;
         folderId: string;
+      };
+    }
+  | {
+      type: 'UPDATE_USER';
+      payload: {
+        user: Partial<appUserType>;
+        userId: string;
       };
     }
   | {

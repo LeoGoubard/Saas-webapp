@@ -10,8 +10,7 @@ import TooltipComponent from '../global/tooltip-component';
 import { createFolder } from '@/lib/supabase/queries';
 import { Accordion } from '../ui/accordion';
 import Dropdown from './dropdown';
-// import useSupabaseRealtime from '@/lib/hooks/useSupabaseRealtime';
-// import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
+import useSupabaseRealtime from '@/lib/hooks/useSupabaseRealtime';
 
 interface FoldersDropdownListProps {
   workspaceFolders: Folder[];
@@ -22,13 +21,12 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({
   workspaceFolders,
   workspaceId,
 }) => {
-  // useSupabaseRealtime();
+  useSupabaseRealtime();
   const { state, dispatch, folderId } = useAppState();
   // const { open, setOpen } = useSubscriptionModal();
   const { toast } = useToast();
   const [folders, setFolders] = useState(workspaceFolders);
   const { subscription } = useSupabaseUser();
-  console.log('subscription', subscription)
   //effec set nitial satte server app state
   useEffect(() => {
     if (workspaceFolders.length > 0) {
