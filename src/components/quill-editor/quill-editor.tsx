@@ -2,8 +2,17 @@
 
 import { useAppState } from '@/lib/providers/state-provider';
 import { File, Folder, workspace } from '@/lib/supabase/supabase.types'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import 'quill/dist/quill.snow.css';
+import { Button } from '../ui/button';
+import { deleteFile, deleteFolder, updateFile, updateFolder } from '@/lib/supabase/queries';
+import { usePathname } from 'next/navigation';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { TooltipContent } from '@radix-ui/react-tooltip';
+import { Badge } from '../ui/badge';
+import Image from 'next/image';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -32,8 +41,43 @@ var TOOLBAR_OPTIONS = [
 ];
 
 const QuillEditor: React.FC<QuillEditorProps> = ({ dirType, fileId, dirDetails }) => {
+  const supabase = createClientComponentClient()
   const { state, workspaceId, folderId, dispatch } = useAppState();
   const [quill, setQuill] = useState<any>(null)
+  const [collaborators, setCollaborators] = useState<{id: string; email: string; avatarUrl: string}[]>([
+    { id: '1212', email: 'test@gmail.com', avatarUrl: '123123' }
+  ])
+  const [saving, setSaving] = useState(false)
+
+  const pathname = usePathname();
+
+  const details = useMemo(() => {
+    let selectedDirectory;
+    if (dirType === "file") {
+      selectedDirectory = state.workspaces.find((workspace) => workspace.id === workspaceId)
+      ?.folders.find((folder) => folder.id === folderId)
+      ?.files.find((file) => file.id === fileId);
+    }
+    if (dirType === "folder") {
+      selectedDirectory = state.workspaces.find((workspace) => workspace.id === workspaceId)
+      ?.folders.find((folder) => folder.id === folderId)
+    }
+    if (dirType === "workspace") {
+      selectedDirectory = state.workspaces.find((workspace) => workspace.id === workspaceId)
+    }
+
+    if (selectedDirectory) return selectedDirectory;
+
+    return {
+      title: dirDetails.title,
+      iconId: dirDetails.iconId,
+      createdAt: dirDetails.createdAt,
+      data: dirDetails.data,
+      inTrash: dirDetails.inTrash,
+      bannerUrl: dirDetails.bannerUrl
+    } as workspace | Folder | File
+
+  }, [state, workspaceId, folderId, fileId, dirType])
 
   const wrapperRef = useCallback( async(wrapper: any) => {
     if (typeof window !=='undefined') {
@@ -55,9 +99,191 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirType, fileId, dirDetails }
     }
   }, [])
 
+  const breadCrumbs = useMemo(() => {
+    if (!pathname || !state.workspaces || !workspaceId) return;
+    const segments = pathname
+      .split('/')
+      .filter((val) => val !== 'dashboard' && val);
+    const workspaceDetails = state.workspaces.find(
+      (workspace) => workspace.id === workspaceId
+    );
+    const workspaceBreadCrumb = workspaceDetails
+      ? `${workspaceDetails.iconId} ${workspaceDetails.title}`
+      : '';
+    if (segments.length === 1) {
+      return workspaceBreadCrumb;
+    }
+
+    const folderSegment = segments[1];
+    const folderDetails = workspaceDetails?.folders.find(
+      (folder) => folder.id === folderSegment
+    );
+    const folderBreadCrumb = folderDetails
+      ? `/ ${folderDetails.iconId} ${folderDetails.title}`
+      : '';
+
+    if (segments.length === 2) {
+      return `${workspaceBreadCrumb} ${folderBreadCrumb}`;
+    }
+
+    const fileSegment = segments[2];
+    const fileDetails = folderDetails?.files.find(
+      (file) => file.id === fileSegment
+    );
+    const fileBreadCrumb = fileDetails
+      ? `/ ${fileDetails.iconId} ${fileDetails.title}`
+      : '';
+
+    return `${workspaceBreadCrumb} ${folderBreadCrumb} ${fileBreadCrumb}`;
+  }, [state, pathname, workspaceId]);
+
+  const restoreFileHandler = async () => {
+    console.log('fileId', fileId)
+    if (dirType === 'file') {
+      if (!folderId || !workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FILE',
+        payload: { file: { inTrash: '' }, fileId, folderId, workspaceId },
+      });
+      await updateFile({ inTrash: '' }, fileId);
+    }
+    if (dirType === 'folder') {
+      if (!workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FOLDER',
+        payload: { folder: { inTrash: '' }, folderId: fileId, workspaceId },
+      });
+      await updateFolder({ inTrash: '' }, fileId);
+    }
+  };
+
+  const deleteFileHandler = async() => {
+    if(dirType === 'file') {
+      if (!folderId || !workspaceId) return;
+
+      dispatch({
+        type: "DELETE_FILE",
+        payload: {
+          fileId,
+          folderId,
+          workspaceId
+        }
+      })
+      await deleteFile(fileId);
+    }
+
+    if (dirType === 'folder') {
+      if (!workspaceId) return
+      dispatch({
+        type: "DELETE_FOLDER",
+        payload: {
+          folderId: fileId,
+          workspaceId
+        }
+      })
+      await deleteFolder(fileId);
+    }
+  }
+
   return (
     <>
+    <div className="relative">
+      {details.inTrash && (
+        <article className="py-2 z-40 bg-[#EB5757] flex md:flex-row flex-col justify-center items-center gap-4 flex-wrap">
+          <div className="flex flex-col md:flex-row gap-2 justify-center items-center">
+            <span className="text-white">
+              This {dirType} is in the trash.
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-transparent border-white text-white hover:bg-white hover:text-[#EB5757]"
+              onClick={restoreFileHandler}
+            >
+              Restore
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-transparent border-white text-white hover:bg-white hover:text-[#EB5757]"
+              onClick={deleteFileHandler}
+            >
+              Delete
+            </Button>
+          </div>
+          <span className="text-sm text-white">{details.inTrash}</span>
+        </article>
+      )}
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between justify-center sm:items-center sm:p-2 p-8">
+      <div>{breadCrumbs}</div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-10">
+              {collaborators?.map((collaborator) => (
+                <TooltipProvider key={collaborator.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Avatar
+                        className="
+                    -ml-3 
+                    bg-background 
+                    border-2 
+                    flex 
+                    items-center 
+                    justify-center 
+                    border-white 
+                    h-8 
+                    w-8 
+                    rounded-full
+                    "
+                      >
+                        <AvatarImage
+                          src={
+                            collaborator.avatarUrl ? collaborator.avatarUrl : ''
+                          }
+                          className="rounded-full"
+                        />
+                        <AvatarFallback>
+                          {collaborator.email.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>{collaborator.email}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+            {saving ? (
+              <Badge
+                variant="secondary"
+                className="bg-orange-600 top-4  text-white right-4 z-50"
+              >
+                Saving...
+              </Badge>
+            ) : (
+              <Badge
+                variant="secondary"
+                className="bg-emerald-600 top-4  text-white right-4 z-50"
+              >
+                Saved
+              </Badge>
+            )}
+          </div>
+      </div>
+    </div>
+    <div className="relative w-full h-[200px]">
+    {details.bannerUrl && 
+      <Image
+        src={supabase.storage.from('file-banners').getPublicUrl(details.bannerUrl).data.publicUrl}
+        fill
+        className="w-full md:-48 h-20 object-cover "
+        alt="Banner Image"
+      />
+    }
+      
+    </div>
+    <div className="flex justify-center items-center flex-col mt-2 relative">
       <div id="container" ref={wrapperRef} className="max-w-[800px]"></div> 
+    </div>
     </>
   )
 }
