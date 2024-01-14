@@ -8,7 +8,7 @@ import { useSupabaseUser } from '@/lib/providers/supabase-user-provider';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Briefcase, CreditCard, Lock, LogOut, Plus, Share, User as UserIcon } from 'lucide-react';
+import { Briefcase, CreditCard, ExternalLink, Lock, LogOut, Plus, Share, User as UserIcon } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
 import {
@@ -31,6 +31,7 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { AlertDialogAction } from '@radix-ui/react-alert-dialog';
 import CypressProfileIcon from '../icons/cypressProfileIcon';
 import LogoutButton from '../global/logout-button';
+import Link from 'next/link';
 
 const SettingsForm = () => {
   const { toast } = useToast();
@@ -345,6 +346,9 @@ const SettingsForm = () => {
         <p className="text-muted-foreground">
           {subscription?.status === 'active' ? 'Pro' : 'Free'}Plan
         </p>
+        <Link href='/' target="_blank" className="text-muted-foreground flex flex-row items-center gap-2">
+          View Plans <ExternalLink size={16} />
+        </Link>
       </>
       <AlertDialog open={openAlertMessage}>
         <AlertDialogContent>

@@ -1,3 +1,4 @@
+import { SubscriptionModalProvider } from '@/lib/providers/subscription-modal-provider';
 import React from 'react';
 
 interface LayoutProps {
@@ -9,7 +10,7 @@ const Layout: React.FC<LayoutProps> = ({ children, params }) => {
 
   return (
     <main className="flex over-hidden h-screen">
-      {children}
+      <SubscriptionModalProvider>{children}</SubscriptionModalProvider>
     </main>
   );
 };
